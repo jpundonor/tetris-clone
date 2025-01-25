@@ -1,5 +1,7 @@
 <template>
-  <button @click="togglePause">Pause</button>
+  <button @click="togglePause">
+    <span class="material-icons-outlined"> pause </span>
+  </button>
   <div v-if="isPaused" class="pause">
     <p>Pause</p>
     <div class="flex gap-2">
@@ -18,7 +20,7 @@ export default {
     ...mapState("game", ["isPaused"]),
   },
   methods: {
-    ...mapActions("game", ["togglePause","resetBoard"]),
+    ...mapActions("game", ["togglePause", "resetBoard"]),
     reset() {
       this.resetBoard();
       this.togglePause();
@@ -32,7 +34,7 @@ export default {
   @apply fixed top-0 left-0 w-full h-full bg-black bg-opacity-60 flex flex-col justify-center items-center;
 }
 button {
-  @apply text-gray-900 bg-white font-semibold px-4 py-2 rounded transition-all duration-500;
+  @apply text-gray-900 bg-white font-semibold px-4 py-2 rounded transition-all duration-500 flex items-center justify-center;
   @apply hover:bg-gray-500 hover:text-slate-50;
 }
 p {
