@@ -1,7 +1,7 @@
 <template>
   <GameStart />
   <div
-    class="grid grid-cols-4 md:grid-cols-8 gap-4 justify-center m-auto md:w-auto"
+    class="grid grid-cols-4 md:grid-cols-8 md:gap-4 gap-1 justify-center m-auto md:w-auto md:p-0 p-2"
   >
     <div class="game-container">
       <h2 class="text-center text-2xl font-semibold">TetrisClone</h2>
@@ -12,6 +12,7 @@
       <GamePause />
       <NextPiece />
       <ScoreBoard />
+      <Controls />
     </div>
   </div>
 </template>
@@ -22,6 +23,7 @@ import GamePause from "./components/GamePause.vue";
 import ScoreBoard from "./components/ScoreBoard.vue";
 import NextPiece from "./components/NextPiece.vue";
 import GameStart from "./components/GameStart.vue";
+import Controls from "./components/Controls.vue";
 </script>
 
 <style scoped>

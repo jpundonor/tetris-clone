@@ -32,6 +32,9 @@ const mutations = {
     if (x !== undefined) state.piece.position.x = x;
     if (y !== undefined) state.piece.position.y = y;
   },
+  SET_LEVEL(state, level) {
+    state.level = level;
+  },
   INCREMENT_SCORE(state, points) {
     state.score += points;
   },
@@ -73,7 +76,7 @@ const actions = {
     }
     state.dropCounter = 0;
   },
-  gameLoop({ state, dispatch, commit }, time = 0) {
+  gameLoop({ state, dispatch }, time = 0) {
     if (state.isPaused || !state.isStarted) {
       requestAnimationFrame((newTime) => dispatch("gameLoop", newTime));
       return;
@@ -82,7 +85,7 @@ const actions = {
     const deltaTime = time - state.lastTime;
     state.lastTime = time;
     state.dropCounter += deltaTime;
-    if (state.dropCounter > 1000) dispatch("dropPiece");
+    if (state.dropCounter > (1000 / state.level)) dispatch("dropPiece");
     dispatch("canvas/drawGrid", null, { root: true });
     requestAnimationFrame((newTime) => dispatch("gameLoop", newTime));
   },
@@ -101,6 +104,9 @@ const actions = {
         commit("UPDATE_PIECE_POSITION", { y: y + 1 }),
         dispatch("handleCollision", { axis: "y", revert: -1, solidify: true })
       ),
+      " ": async () => {
+        await dispatch("hardDrop");
+      },
       ArrowUp: () => dispatch("rotatedPiece"),
     };
     if (!state.isStarted) return;
@@ -117,6 +123,18 @@ const actions = {
       if (solidify) {
         dispatch("solidifyPiece");
         dispatch("removeRows");
+      }
+    }
+  },
+  async hardDrop({ state, dispatch }) {
+    while (true) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      state.piece.position.y++;
+      if (await dispatch("checkCollision")) {
+        state.piece.position.y--;
+        dispatch("solidifyPiece");
+        dispatch("removeRows");
+        break;
       }
     }
   },
@@ -163,12 +181,17 @@ const actions = {
     while (newGrid.length < state.rows) {
       newGrid.unshift(Array(state.cols).fill(0));
       commit("INCREMENT_SCORE", 100);
+      const levelUp = Math.floor(state.score / 1000) + 1;
+      if (levelUp > state.level) {
+        commit("SET_LEVEL", levelUp);
+      }
     }
     commit("UPDATE_GRID", newGrid);
   },
   resetBoard({ commit }) {
     state.grid.forEach((row) => row.fill(0));
     commit("RESET_SCORE");
+    commit("SET_LEVEL", 1);
   },
 };
 
@@ -178,6 +201,7 @@ const getters = {
   getPiece: (state) => state.piece,
   getScore: (state) => state.score,
   getNextPiece: (state) => state.nextPiece,
+  getLevel: (state) => state.level,
 };
 
 export default {
