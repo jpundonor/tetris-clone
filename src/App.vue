@@ -7,12 +7,13 @@
       <h2 class="text-center text-2xl font-semibold">TetrisClone</h2>
 
       <GameCanvas />
+      <Controls :isAxisX="true" />
     </div>
     <div class="info-container">
       <GamePause />
       <NextPiece />
       <ScoreBoard />
-      <Controls />
+      <Controls :isAxisX="false" />
     </div>
   </div>
 </template>
