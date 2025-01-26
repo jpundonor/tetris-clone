@@ -1,29 +1,46 @@
 <template>
+  <ScoresModal :isOpen="isModalOpen" @close="toggleModal" />
   <button @click="togglePause">
     <span class="material-icons-outlined"> pause </span>
   </button>
   <div v-if="isPaused" class="pause">
     <p>Pause</p>
     <div class="flex gap-2">
+      <button @click="reset">Restart</button>
+      <button @click="toggleModal">Scores</button>
       <button @click="togglePause">Resume</button>
-      <!-- <button @click="reset">Restart</button> -->
     </div>
   </div>
 </template>
 
 <script>
 import { mapActions, mapState } from "vuex";
+import ScoresModal from "./ScoresModal.vue";
 
 export default {
   name: "GamePause",
+  components: {
+    ScoresModal,
+  },
+  data() {
+    return {
+      isModalOpen: false,
+    };
+  },
   computed: {
     ...mapState("game", ["isPaused"]),
   },
   methods: {
-    ...mapActions("game", ["togglePause", "resetBoard"]),
+    ...mapActions("game", ["togglePause", "resetBoard", "gameLoop"]),
     reset() {
       this.resetBoard();
       this.togglePause();
+    },
+    toggleModal() {
+      this.isModalOpen = !this.isModalOpen;
+    },
+    reset() {
+      this.resetBoard();
     },
   },
 };
