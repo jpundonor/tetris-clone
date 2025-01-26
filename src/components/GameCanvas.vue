@@ -1,23 +1,37 @@
 <template>
-  <div @touchstart.passive="handleTouchStart" @touchend.passive="handleTouchEnd">
+  <div
+    @touchstart.passive="handleTouchStart"
+    @touchend.passive="handleTouchEnd"
+  >
     <canvas ref="gameCanvas"></canvas>
   </div>
+  <GameOver :isGameOver="getGameOver" @close="resetGame" />
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
+import GameOver from "./GameOver.vue";
 
 export default {
   name: "GameCanvas",
+  components: {
+    GameOver,
+  },
+  computed: {
+    ...mapGetters("game", ["getGameOver"]),
+  },
   methods: {
     ...mapActions("canvas", ["initializeCanvas"]),
     ...mapActions("game", [
       "initializeGame",
       "gameLoop",
       "handleKeydown",
-      "togglePause",
+      "resetBoard",
     ]),
     ...mapActions("inputs", ["handleTouchStart", "handleTouchEnd"]),
+    resetGame() {
+      this.resetBoard();
+    },
   },
   mounted() {
     this.initializeGame();
