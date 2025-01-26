@@ -13,6 +13,7 @@ const state = {
   nextPiece: {},
   isPaused: false,
   isStarted: false,
+  gameOver: false,
 };
 
 const mutations = {
@@ -53,6 +54,9 @@ const mutations = {
   SET_IS_STARTED(state) {
     state.isStarted = !state.isStarted;
   },
+  SET_GAME_OVER(state) {
+    state.gameOver = !state.gameOver;
+  },
 };
 
 const actions = {
@@ -77,7 +81,7 @@ const actions = {
     state.dropCounter = 0;
   },
   gameLoop({ state, dispatch }, time = 0) {
-    if (state.isPaused || !state.isStarted) {
+    if (state.isPaused || !state.isStarted || state.gameOver) {
       requestAnimationFrame((newTime) => dispatch("gameLoop", newTime));
       return;
     }
@@ -111,6 +115,7 @@ const actions = {
     };
     if (!state.isStarted) return;
     if (state.isPaused) return;
+    if (state.gameOver) return;
 
     movements[event.key]?.();
   },
@@ -170,11 +175,10 @@ const actions = {
       });
     });
     commit("SPAWN_NEXT_PIECE");
-
     if (await dispatch("checkCollision")) {
-      alert("Game Over");
-      dispatch("resetBoard");
+      commit("SET_GAME_OVER");
     }
+
   },
   removeRows({ state, commit }) {
     const newGrid = state.grid.filter((row) => !row.every((cell) => cell));
@@ -188,8 +192,13 @@ const actions = {
     }
     commit("UPDATE_GRID", newGrid);
   },
-  resetBoard({ commit }) {
-    state.grid.forEach((row) => row.fill(0));
+  toggleGameOver({ commit }) {
+    commit("SET_GAME_OVER");
+  },
+  resetBoard({ commit, dispatch, state }) {
+    if (state.gameOver) commit("SET_GAME_OVER");
+    if (state.isPaused) commit("SET_IS_PAUSED");
+    dispatch("initializeGame");
     commit("RESET_SCORE");
     commit("SET_LEVEL", 1);
   },
@@ -202,6 +211,7 @@ const getters = {
   getScore: (state) => state.score,
   getNextPiece: (state) => state.nextPiece,
   getLevel: (state) => state.level,
+  getGameOver: (state) => state.gameOver,
 };
 
 export default {
