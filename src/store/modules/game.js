@@ -96,9 +96,11 @@ const actions = {
   },
   async gameLoop({ state, dispatch }, time = 0) {
     if (state.isPaused || !state.isStarted || state.gameOver) {
+      state.lastTime = null;
       requestAnimationFrame((newTime) => dispatch("gameLoop", newTime));
       return;
     }
+
     if (!state.lastTime) state.lastTime = time;
     const deltaTime = time - state.lastTime;
     state.lastTime = time;
@@ -110,7 +112,8 @@ const actions = {
       await dispatch("dropPiece");
       state.dropCounter -= dropInterval;
     }
-    await dispatch("canvas/drawGrid", null, { root: true });
+    if (!state.isPaused)
+      await dispatch("canvas/drawGrid", null, { root: true });
     requestAnimationFrame((newTime) => dispatch("gameLoop", newTime));
   },
   handleKeydown({ state, dispatch }, event) {
