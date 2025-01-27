@@ -1,7 +1,11 @@
+import { detectCollision, rotateMatrix } from "../../utils/gameLogic";
 import { getRandomTetromino } from "../../utils/tetrominos";
+
+const INITIAL_POSITION = { x: 4, y: 0 };
 
 const state = {
   level: 1,
+  lines: 0,
   score: 0,
   dropCounter: 0,
   lastTime: 0,
@@ -9,8 +13,8 @@ const state = {
   rows: 20,
   cols: 10,
   blockSize: 30,
-  piece: {},
-  nextPiece: {},
+  piece: { shape: [], color: null, position: { ...INITIAL_POSITION } },
+  nextPiece: getRandomTetromino(),
   isPaused: false,
   isStarted: false,
   gameOver: false,
@@ -18,20 +22,36 @@ const state = {
 
 const mutations = {
   INITIALIZE_GRID(state) {
-    state.grid = Array(state.rows)
-      .fill()
-      .map(() => Array(state.cols).fill(0)); // 0 means empty cell
-  },
-  SPAWN_PIECE(state) {
-    state.piece = { ...getRandomTetromino(), position: { x: 4, y: 0 } };
+    state.grid = Array.from({ length: state.rows }, () =>
+      Array(state.cols).fill(0)
+    ); // 0 means empty cell
   },
   SPAWN_NEXT_PIECE(state) {
-    state.piece = { ...state.nextPiece, position: { x: 4, y: 0 } };
+    state.piece = { ...state.nextPiece, position: { ...INITIAL_POSITION } };
     state.nextPiece = getRandomTetromino();
   },
-  UPDATE_PIECE_POSITION(state, { x, y }) {
-    if (x !== undefined) state.piece.position.x = x;
-    if (y !== undefined) state.piece.position.y = y;
+  UPDATE_PIECE_POSITION(state, { x = 0, y = 0 }) {
+    state.piece.position.x += x;
+    state.piece.position.y += y;
+  },
+  SET_PIECE_SHAPE(state, shape) {
+    state.piece.shape = shape;
+  },
+  SOLIDIFY_PIECE(state) {
+    state.piece.shape.forEach((row, y) => {
+      row.forEach((cell, x) => {
+        if (cell) {
+          state.grid[y + state.piece.position.y][x + state.piece.position.x] =
+            state.piece.color;
+        }
+      });
+    });
+  },
+  INCREMENT_LINES(state, lines) {
+    state.lines += lines;
+  },
+  UPDATE_LEVEL(state) {
+    state.level = Math.floor(state.lines / 10) + 1;
   },
   SET_LEVEL(state, level) {
     state.level = level;
@@ -45,10 +65,7 @@ const mutations = {
   UPDATE_GRID(state, grid) {
     state.grid = grid;
   },
-  SET_NEXT_PIECE(state, piece) {
-    state.nextPiece = piece;
-  },
-  SET_IS_PAUSED(state) {
+  TOGGLE_PAUSED(state) {
     state.isPaused = !state.isPaused;
   },
   SET_IS_STARTED(state) {
@@ -62,56 +79,52 @@ const mutations = {
 const actions = {
   initializeGame({ commit }) {
     commit("INITIALIZE_GRID");
-    commit("SPAWN_PIECE");
-    commit("SET_NEXT_PIECE", getRandomTetromino());
+    commit("SPAWN_NEXT_PIECE");
   },
   togglePause({ commit }) {
-    commit("SET_IS_PAUSED");
+    commit("TOGGLE_PAUSED");
   },
   startGame({ commit }) {
     commit("SET_IS_STARTED");
   },
-  async dropPiece({ state, dispatch }) {
-    state.piece.position.y++;
-    if (await dispatch("checkCollision")) {
-      state.piece.position.y--;
-      dispatch("solidifyPiece");
-      dispatch("removeRows");
-    }
-    state.dropCounter = 0;
+  async dropPiece({ dispatch }) {
+    await dispatch("handleCollision", { axis: "y", move: 1, solidify: true });
   },
-  gameLoop({ state, dispatch }, time = 0) {
+  async gameLoop({ state, dispatch }, time = 0) {
     if (state.isPaused || !state.isStarted || state.gameOver) {
       requestAnimationFrame((newTime) => dispatch("gameLoop", newTime));
       return;
     }
-
+    if (!state.lastTime) state.lastTime = time;
     const deltaTime = time - state.lastTime;
     state.lastTime = time;
+
     state.dropCounter += deltaTime;
-    if (state.dropCounter > (1000 / state.level)) dispatch("dropPiece");
-    dispatch("canvas/drawGrid", null, { root: true });
+    const dropInterval = 1000 / (state.level + 1);
+
+    while (state.dropCounter > dropInterval) {
+      await dispatch("dropPiece");
+      state.dropCounter -= dropInterval;
+    }
+    await dispatch("canvas/drawGrid", null, { root: true });
     requestAnimationFrame((newTime) => dispatch("gameLoop", newTime));
   },
-  handleKeydown({ state, dispatch, commit }, event) {
-    const { x, y } = state.piece.position;
+  handleKeydown({ state, dispatch }, event) {
     const movements = {
-      ArrowLeft: () => (
-        commit("UPDATE_PIECE_POSITION", { x: x - 1 }),
-        dispatch("handleCollision", { axis: "x", revert: 1 })
-      ),
-      ArrowRight: () => (
-        commit("UPDATE_PIECE_POSITION", { x: x + 1 }),
-        dispatch("handleCollision", { axis: "x", revert: -1 })
-      ),
-      ArrowDown: () => (
-        commit("UPDATE_PIECE_POSITION", { y: y + 1 }),
-        dispatch("handleCollision", { axis: "y", revert: -1, solidify: true })
-      ),
+      ArrowLeft: async () =>
+        await dispatch("handleCollision", { axis: "x", move: -1 }),
+      ArrowRight: async () =>
+        await dispatch("handleCollision", { axis: "x", move: 1 }),
+      ArrowDown: async () =>
+        await dispatch("handleCollision", {
+          axis: "y",
+          move: 1,
+          solidify: true,
+        }),
       " ": async () => {
         await dispatch("hardDrop");
       },
-      ArrowUp: () => dispatch("rotatedPiece"),
+      ArrowUp: async () => await dispatch("rotatedPiece"),
     };
     if (!state.isStarted) return;
     if (state.isPaused) return;
@@ -120,94 +133,74 @@ const actions = {
     movements[event.key]?.();
   },
   async handleCollision(
-    { state, dispatch },
-    { axis, revert, solidify = false }
+    { state, dispatch, commit },
+    { axis, move, solidify = false }
   ) {
-    if (await dispatch("checkCollision")) {
-      state.piece.position[axis] += revert;
+    commit("UPDATE_PIECE_POSITION", { [axis]: move });
+    if (detectCollision(state.grid, state.piece, state.piece.position)) {
+      commit("UPDATE_PIECE_POSITION", { [axis]: -move });
       if (solidify) {
-        dispatch("solidifyPiece");
-        dispatch("removeRows");
+        await dispatch("solidifyPiece");
+        await dispatch("removeRows");
       }
     }
   },
   async hardDrop({ state, dispatch }) {
-    while (true) {
-      await new Promise((resolve) => setTimeout(resolve, 25));
-      state.piece.position.y++;
-      if (await dispatch("checkCollision")) {
-        state.piece.position.y--;
-        dispatch("solidifyPiece");
-        dispatch("removeRows");
-        break;
-      }
-    }
-  },
-  async rotatedPiece({ state, dispatch }) {
-    const shape = state.piece.shape;
-    const rotatedShape = shape[0].map((_, i) =>
-      shape.map((row) => row[i]).reverse()
-    );
-    const previousShape = state.piece.shape;
-    state.piece.shape = rotatedShape;
-    if (await dispatch("checkCollision")) state.piece.shape = previousShape;
-  },
-  checkCollision({ state }) {
-    const collision = state.piece.shape.some((row, y) =>
-      row.some(
-        (cell, x) =>
-          cell &&
-          (state.grid[y + state.piece.position.y]?.[
-            x + state.piece.position.x
-          ] ??
-            1)
-      )
-    );
-    return collision;
-  },
-  async solidifyPiece({ state, commit, dispatch }) {
-    state.piece.shape.forEach((row, y) => {
-      row.forEach((cell, x) => {
-        if (cell) {
-          state.grid[y + state.piece.position.y][x + state.piece.position.x] =
-            state.piece.color;
-        }
-      });
-    });
-    commit("SPAWN_NEXT_PIECE");
-    if (await dispatch("checkCollision")) {
-      commit("SET_GAME_OVER");
+    let maxDrop = 0;
+
+    while (
+      !detectCollision(state.grid, state.piece, {
+        ...state.piece.position,
+        y: state.piece.position.y + maxDrop + 1,
+      })
+    ) {
+      maxDrop++;
     }
 
+    for (let step = 1; step <= maxDrop; step++) {
+      dispatch("handleCollision", { axis: "y", move: 1, solidify: true });
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+  },
+  rotatedPiece({ state, commit }) {
+    const rotatedShape = rotateMatrix(state.piece.shape);
+    const previousShape = state.piece.shape;
+    commit("SET_PIECE_SHAPE", rotatedShape);
+    if (detectCollision(state.grid, state.piece, state.piece.position)) {
+      commit("SET_PIECE_SHAPE", previousShape);
+    }
+  },
+  solidifyPiece({ commit, state }) {
+    commit("SOLIDIFY_PIECE");
+    commit("SPAWN_NEXT_PIECE");
+    if (detectCollision(state.grid, state.piece, state.piece.position))
+      commit("SET_GAME_OVER");
   },
   removeRows({ state, commit }) {
-    const newGrid = state.grid.filter((row) => !row.every((cell) => cell));
-    while (newGrid.length < state.rows) {
-      newGrid.unshift(Array(state.cols).fill(0));
-      commit("INCREMENT_SCORE", 100);
-      const levelUp = Math.floor(state.score / 1000) + 1;
-      if (levelUp > state.level) {
-        commit("SET_LEVEL", levelUp);
-      }
-    }
-    commit("UPDATE_GRID", newGrid);
+    const clearedRows = state.grid.filter((row) => !row.every((cell) => cell));
+    const newRows = Array.from(
+      { length: state.rows - clearedRows.length },
+      () => Array(state.cols).fill(0)
+    );
+    const updatedGrid = [...newRows, ...clearedRows];
+    commit("UPDATE_GRID", updatedGrid);
+    commit("INCREMENT_SCORE", newRows.length * 100);
+    commit("INCREMENT_LINES", newRows.length);
+    commit("UPDATE_LEVEL");
   },
   toggleGameOver({ commit }) {
     commit("SET_GAME_OVER");
   },
-  resetBoard({ commit, dispatch, state }) {
+  async resetBoard({ commit, dispatch, state }) {
     if (state.gameOver) commit("SET_GAME_OVER");
-    if (state.isPaused) commit("SET_IS_PAUSED");
-    dispatch("initializeGame");
+    if (state.isPaused) commit("TOGGLE_PAUSED");
+    await dispatch("initializeGame");
     commit("RESET_SCORE");
     commit("SET_LEVEL", 1);
   },
 };
 
 const getters = {
-  getGrid: (state) => state.grid,
-  getBlockSize: (state) => state.blockSize,
-  getPiece: (state) => state.piece,
   getScore: (state) => state.score,
   getNextPiece: (state) => state.nextPiece,
   getLevel: (state) => state.level,
