@@ -18,6 +18,7 @@ const state = {
   isPaused: false,
   isStarted: false,
   gameOver: false,
+  isHardDropActive: false,
 };
 
 const mutations = {
@@ -73,6 +74,9 @@ const mutations = {
   },
   SET_GAME_OVER(state) {
     state.gameOver = !state.gameOver;
+  },
+  SET_HARD_DROP_ACTIVE(state, isActive) {
+    state.isHardDropActive = isActive;
   },
 };
 
@@ -145,7 +149,10 @@ const actions = {
       }
     }
   },
-  async hardDrop({ state, dispatch }) {
+  async hardDrop({ state, dispatch, commit }) {
+    if (state.isHardDropActive) return;
+
+    commit("SET_HARD_DROP_ACTIVE", true);
     let maxDrop = 0;
 
     while (
@@ -161,6 +168,7 @@ const actions = {
       dispatch("handleCollision", { axis: "y", move: 1, solidify: true });
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
+    commit("SET_HARD_DROP_ACTIVE", false);
   },
   rotatedPiece({ state, commit }) {
     const rotatedShape = rotateMatrix(state.piece.shape);
