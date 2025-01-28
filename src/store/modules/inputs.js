@@ -30,7 +30,7 @@ const actions = {
       }
     } else {
       if (deltaY > 0) {
-        dispatch("game/handleKeydown", { key: "ArrowDown" }, { root: true });
+        dispatch("game/handleKeydown", { key: " " }, { root: true });
       } else {
         dispatch("game/handleKeydown", { key: "ArrowUp" }, { root: true });
       }
