@@ -51,6 +51,9 @@ const mutations = {
   INCREMENT_LINES(state, lines) {
     state.lines += lines;
   },
+  RESET_LINES(state) {
+    state.lines = 0;
+  },
   UPDATE_LEVEL(state) {
     state.level = Math.floor(state.lines / 10) + 1;
   },
@@ -208,6 +211,7 @@ const actions = {
     await dispatch("initializeGame");
     commit("RESET_SCORE");
     commit("SET_LEVEL", 1);
+    commit("RESET_LINES");
   },
 };
 
