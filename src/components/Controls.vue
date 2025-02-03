@@ -13,7 +13,7 @@
       <span class="material-icons-outlined"> keyboard_arrow_right </span>
     </button>
   </div>
-  <div v-if="!isAxisX" class="flex flex-col mt-5 md:hidden">
+  <div v-if="!isAxisX" class="flex flex-col mt-5 md:hidden items-center">
     <button @click="drop">
       <span class="material-icons-outlined"> keyboard_arrow_down </span>
     </button>
