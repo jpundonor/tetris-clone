@@ -12,6 +12,7 @@
     <div class="info-container">
       <GamePause />
       <NextPiece />
+      <HoldPiece />
       <ScoreBoard />
       <Controls :isAxisX="false" />
     </div>
@@ -25,6 +26,7 @@ import ScoreBoard from "./components/ScoreBoard.vue";
 import NextPiece from "./components/NextPiece.vue";
 import GameStart from "./components/GameStart.vue";
 import Controls from "./components/Controls.vue";
+import HoldPiece from "./components/HoldPiece.vue";
 </script>
 
 <style scoped>

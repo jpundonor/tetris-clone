@@ -1,5 +1,5 @@
 <template>
-  <div class="text-lg py-10">
+  <div class="text-lg py-4">
     <h2 class="text-center">Next Piece</h2>
     <div class="bg-gray-900 border border-x-gray-200 flex justify-center items-center">
       <canvas class="mx-6 my-4 m-auto" ref="nextPieceCanvas"></canvas>
