@@ -24,8 +24,8 @@ export default {
       controls: [
         { action: "Rotate", control: "Arrow up", icon: "arrow_upward", mobile: "touch_app"},
         { action: "Drop", control: "Arrow down", icon: "arrow_downward", mobile: "keyboard_arrow_down" },
-        { action: "Move Left", control: "Space bar", icon: "arrow_back", mobile: "keyboard_arrow_left" },
-        { action: "Move Right", control: "Space bar", icon: "arrow_forward", mobile: "keyboard_arrow_right" },
+        { action: "Move Left", control: "Arrow left", icon: "arrow_back", mobile: "keyboard_arrow_left" },
+        { action: "Move Right", control: "Arrow right", icon: "arrow_forward", mobile: "keyboard_arrow_right" },
         { action: "Hard Drop", control: "Space bar", icon: "space_bar", mobile: "swipe_down" },
         { action: "Hold Piece", control: "Enter", icon: "bookmark", mobile: "bookmark"},
         { action: "Pause", control: "Esc / p", icon: "pause", mobile: "pause"},
