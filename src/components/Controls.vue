@@ -9,11 +9,15 @@
     <button @click="handleKeydown({ key: 'ArrowUp' })">
       <span class="material-icons-outlined"> autorenew </span>
     </button>
+    <button @click="handleKeydown({ key: 'Enter' })">
+      <span class="material-icons-outlined"> bookmark </span>
+    </button>
+
     <button @click="handleKeydown({ key: 'ArrowRight' })">
       <span class="material-icons-outlined"> keyboard_arrow_right </span>
     </button>
   </div>
-  <div v-if="!isAxisX" class="flex flex-col mt-5 md:hidden items-center">
+  <div v-if="!isAxisX" class="flex flex-col mt-3 md:hidden items-center">
     <button @click="drop">
       <span class="material-icons-outlined"> keyboard_arrow_down </span>
     </button>
@@ -25,11 +29,15 @@
 
 <script>
 import { mapActions } from "vuex";
+import HoldPiece from "./HoldPiece.vue";
 
 export default {
   name: "Controls",
   props: {
     isAxisX: Boolean,
+  },
+  components: {
+    HoldPiece,
   },
   methods: {
     ...mapActions("game", ["hardDrop", "handleKeydown"]),
@@ -42,6 +50,6 @@ export default {
 
 <style scoped>
 button {
-  @apply bg-gray-800 text-white p-2 m-2 rounded-md flex-1 flex items-center justify-center;
+  @apply bg-gray-800 text-white p-2 my-2 mx-1 rounded-md flex-1 flex items-center justify-center;
 }
 </style>
