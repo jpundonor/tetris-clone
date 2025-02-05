@@ -5,10 +5,14 @@
   </button>
   <div v-if="isPaused" class="pause">
     <p>Pause</p>
-    <div class="flex gap-2">
+    <div class="grid grid-cols-2 gap-4 md:flex">
       <button @click="reset">Restart</button>
       <button @click="toggleModal">Scores</button>
+      <button @click="showModalControls">Controls</button>
       <button @click="togglePause">Resume</button>
+    </div>
+    <div v-show="showControls">
+      <UiControls />
     </div>
   </div>
 </template>
@@ -16,15 +20,18 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import ScoresModal from "./ScoresModal.vue";
+import UiControls from "./UiControls.vue";
 
 export default {
   name: "GamePause",
   components: {
     ScoresModal,
+    UiControls,
   },
   data() {
     return {
       isModalOpen: false,
+      showControls: false,
     };
   },
   computed: {
@@ -41,6 +48,9 @@ export default {
     },
     reset() {
       this.resetBoard();
+    },
+    showModalControls() {
+      this.showControls = !this.showControls;
     },
   },
 };

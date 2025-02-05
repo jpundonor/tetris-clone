@@ -144,6 +144,11 @@ const actions = {
         await dispatch("hardDrop");
       },
       ArrowUp: async () => await dispatch("rotatedPiece"),
+      Enter: async () => {
+        await dispatch("holdCurrentPiece");
+        await dispatch("holdPieceCanvas/drawHoldPiece", null, { root: true });
+        document.activeElement.blur();
+      },
       Escape: () => dispatch("togglePause"),
       p: () => dispatch("togglePause"),
     };
