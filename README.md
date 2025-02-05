@@ -23,14 +23,15 @@ Este es un clon del clásico juego Tetris , desarrollado con Vue.js como parte d
 | Vercel | Despliegue continuo |
 
 ## 🎮 Controles
-**🖥️ En escritorio:**
+#### **🖥️ En escritorio:**
 - **Flecha derecha/izquierda**: Mover la pieza horizontalmente.
 - **Flecha abajo**: Acelerar la caída de la pieza.
 - **Flecha arriba**: Rotar pieza.
 - **Espacio**: Dejar caer la pieza instantáneamente.
 - **Enter**: Guardar la pieza actual.
 - **Esc / P**: Pausar/Reanudar el juego.
-**📱 En dispositivos móviles:**
+  
+#### **📱 En dispositivos móviles:**
 - **Botones en pantalla:**: Controles táctiles para mover, rotar y dejar caer las piezas.
 - **Toque a la pantalla**: Rotar pieza.
 - **Deslizar abajo**: Dejar caer la pieza instantáneamente.
