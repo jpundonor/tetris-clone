@@ -15,6 +15,7 @@ const state = {
   blockSize: 30,
   piece: { shape: [], color: null, position: { ...INITIAL_POSITION } },
   nextPiece: getRandomTetromino(),
+  holdPiece: { shape: [], color: null },
   isPaused: false,
   isStarted: false,
   gameOver: false,
@@ -37,6 +38,14 @@ const mutations = {
   },
   SET_PIECE_SHAPE(state, shape) {
     state.piece.shape = shape;
+  },
+  SET_HOLD_PIECE(state, piece) {
+    state.holdPiece = piece;
+  },
+  SPAWN_PIECE_HELD(state) {
+    const currentPiece = state.piece;
+    state.piece = { ...state.holdPiece, position: { ...INITIAL_POSITION } };
+    state.holdPiece = currentPiece;
   },
   SOLIDIFY_PIECE(state) {
     state.piece.shape.forEach((row, y) => {
@@ -135,10 +144,11 @@ const actions = {
         await dispatch("hardDrop");
       },
       ArrowUp: async () => await dispatch("rotatedPiece"),
+      Escape: () => dispatch("togglePause"),
+      p: () => dispatch("togglePause"),
     };
-    if (!state.isStarted) return;
-    if (state.isPaused) return;
-    if (state.gameOver) return;
+    if (!state.isStarted || state.gameOver) return;
+    if (state.isPaused && event.key !== "Escape" && event.key !== "p") return;
 
     movements[event.key]?.();
   },
@@ -175,6 +185,14 @@ const actions = {
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
     commit("SET_HARD_DROP_ACTIVE", false);
+  },
+  holdCurrentPiece({ state, commit }) {
+    if (state.holdPiece.shape.length === 0) {
+      commit("SET_HOLD_PIECE", state.piece);
+      commit("SPAWN_NEXT_PIECE");
+    } else {
+      commit("SPAWN_PIECE_HELD");
+    }
   },
   rotatedPiece({ state, commit }) {
     const rotatedShape = rotateMatrix(state.piece.shape);
@@ -220,6 +238,7 @@ const getters = {
   getNextPiece: (state) => state.nextPiece,
   getLevel: (state) => state.level,
   getGameOver: (state) => state.gameOver,
+  getHoldPiece: (state) => state.holdPiece,
 };
 
 export default {
